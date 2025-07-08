@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BetCheck</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bulma CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <!-- Font Awesome para ícones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Fonte Lexend -->
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+  <style>
+    /* Estilos gerais */
+    body {
+      font-family: 'Lexend', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      min-width: 500px;
+      width: 500px;
+    }
+    
+    /* Estilos gerais */
+    .main-container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+      margin: 0;
+    }
+    
+    /* Hero personalizado */
+    .hero.is-primary {
+      background: linear-gradient(135deg, #6200ea, #7c4dff);
+    }
+    
+    .hero.is-primary .title {
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    
+    .hero.is-primary .subtitle {
+      opacity: 0.9;
+    }
+    
+    /* Área de conteúdo */
+    .content-area {
+      padding: 1.25rem;
+    }
+    
+    /* Cards */
+    .card {
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    /* Status Hero Card - Site Homologado */
+    #status-hero.has-background-success-light {
+      border-left: 4px solid #48c774;
+      animation: glow-success 2s ease-in-out 1;
+    }
+    
+    @keyframes glow-success {
+      0% { box-shadow: 0 0 5px rgba(72, 199, 116, 0.2); }
+      50% { box-shadow: 0 0 20px rgba(72, 199, 116, 0.6); }
+      100% { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
+    }
+    
+    /* Selo de verificação */
+    #verification-badge .tag {
+      padding: 0.5em 1em;
+      border-radius: 16px;
+      box-shadow: 0 2px 5px rgba(72, 199, 116, 0.3);
+    }
+    
+    /* Data de verificação */
+    #verification-date {
+      margin-top: 0.5rem;
+      font-style: italic;
+    }
+    /* Spinner de carregamento */
+    .loading-spinner {
+      margin: 3rem auto;
+      text-align: center;
+      padding: 1rem;
+    }
+    
+    .loading-spinner .preloader-wrapper {
+      margin: 0 auto;
+    }
+    
+    /* Alerta de phishing */
+    .phishing-alert {
+      border-left: 4px solid #f14668;
+      background-color: #ffebee;
+      position: relative;
+      overflow: hidden;
+      animation: pulse 2s infinite;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(241, 70, 104, 0.2);
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 2px 4px rgba(244, 67, 54, 0.2); }
+      50% { box-shadow: 0 4px 8px rgba(244, 67, 54, 0.4); }
+      100% { box-shadow: 0 2px 4px rgba(244, 67, 54, 0.2); }
+    }
+    
+    /* Tags */
+    .tags .tag {
+      margin: 0.2rem;
+      transition: all 0.3s;
+    }
+    
+    .tags .tag:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Ícones interativos */
+    .clickable-icon {
+      color: #6200ea;
+      cursor: pointer;
+      transition: transform 0.3s, color 0.3s;
+    }
+    
+    .clickable-icon:hover {
+      color: #7c4dff;
+      transform: scale(1.2);
+    }
+    
+    /* Container de ícones */
+    .icon-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 0.75rem;
+    }
+    
+    /* Melhorias para o resultado */
+    #result {
+      animation: fadeIn 0.5s;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    /* Melhorias para botões e elementos interativos */
+    .delete {
+      transition: background-color 0.3s ease;
+    }
+    
+    .delete:hover {
+      background-color: #f14668;
+    }
+    
+    /* Melhorias para o layout geral */
+    .content-area {
+      padding: 1.5rem;
+    }
+    
+    /* Adiciona uma borda suave aos cards */
+    .card {
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    /* Estilo para a tag de verificação */
+    .verification-container {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+    
+    .verification-tag {
+      max-width: 95%;
+      white-space: nowrap !important;
+      height: auto !important;
+      padding: 0.5em 1em;
+      line-height: 1.4;
+      font-size: 1rem;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .verification-tag .icon {
+      margin-right: 0.3rem;
+      flex-shrink: 0;
+    }
+    
+    /* Cards de informação */
+    .info-card {
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    }
+    
+    .info-card:hover {
+      box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    }
+    
+    .info-card .card-header {
+      background-color: #f5f5f5;
+      padding: 12px 16px;
+    }
+    
+    /* Modais do Bulma */
+    .modal-card-head {
+      background: linear-gradient(135deg, #6200ea, #7c4dff);
+      color: white;
+    }
+    
+    .modal-card-title {
+      color: white;
+      font-weight: 500;
+    }
+    
+    .modal-card {
+      border-radius: 8px;
+      overflow: hidden;
+      max-width: 95%;
+      width: auto;
+      margin: 0 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <div class="hero is-primary is-small">
+      <div class="hero-body">
+        <div class="container has-text-centered">
+          <h1 class="title">
+            <span class="icon-text">
+              <span class="icon"><i class="fas fa-shield-alt"></i></span>
+              <span>BetCheck</span>
+            </span>
+          </h1>
+          <p class="subtitle is-6">Verificador de sites de apostas homologados</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="content-area">
+      <div id="loading" class="loading-spinner">
+        <div class="has-text-centered">
+          <span class="icon is-large">
+            <i class="fas fa-spinner fa-pulse fa-3x has-text-primary"></i>
+          </span>
+          <p class="has-text-centered mt-3">Verificando site...</p>
+        </div>
+      </div>
+      
+      <div id="result" class="is-hidden">
+        <div id="status-hero" class="card">
+          <div class="card-content">
+            <div class="has-text-centered">
+              <span id="status-icon" class="icon is-large"></span>
+              <h2 id="status-message" class="title is-4 mt-2"></h2>
+              <div id="verification-badge" class="is-hidden mt-3 mb-2">
+                <div class="verification-container">
+                  <div class="tag is-success is-medium verification-tag">
+                    <span class="icon"><i class="fas fa-certificate"></i></span>
+                    <span>Verificado pelo Ministério da Fazenda</span>
+                  </div>
+                </div>
+              </div>
+              <p id="verification-date" class="is-hidden subtitle is-6 has-text-grey"></p>
+            </div>
+          </div>
+        </div>
+        
+        <div id="phishing-warning" class="notification is-danger is-light is-hidden phishing-alert">
+          <button class="delete"></button>
+          <div class="has-text-centered mb-3">
+            <span class="icon is-large">
+              <i class="fas fa-exclamation-triangle fa-2x has-text-danger"></i>
+            </span>
+            <h5 class="title is-5 mt-2">ALERTA DE PHISHING</h5>
+          </div>
+          <div id="phishing-message" class="content has-text-centered mb-4"></div>
+          <div id="phishing-similar-sites" class="is-hidden">
+            <p class="has-text-weight-bold has-text-centered mb-2">Sites oficiais similares:</p>
+            <div id="phishing-similar-sites-list" class="tags is-centered"></div>
+          </div>
+        </div>
+        
+        <div id="details" class="card is-hidden">
+          <div class="card-content">
+            <div class="media">
+              <div class="media-left">
+                <figure class="image is-48x48">
+                  <i class="fas fa-building fa-3x has-text-primary"></i>
+                </figure>
+              </div>
+              <div class="media-content">
+                <p class="title is-5" id="company-name"></p>
+                <div class="subtitle is-6 cnpj-info">
+                  <span id="company-cnpj"></span>
+                </div>
+              </div>
+            </div>
+            <div class="content mt-3">
+              <p id="company-description" class="has-text-grey-dark">
+                Esta empresa está devidamente homologada para operar sites de apostas no Brasil, conforme regulamentação do Ministério da Fazenda.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div id="related-sites" class="card is-hidden">
+          <div class="card-content">
+            <div class="media">
+              <div class="media-left">
+                <span class="icon has-text-info">
+                  <i class="fas fa-link fa-lg"></i>
+                </span>
+              </div>
+              <div class="media-content">
+                <p class="title is-5">Sites Relacionados</p>
+                <p class="subtitle is-6">Outros sites homologados da mesma empresa</p>
+              </div>
+            </div>
+            <div class="content mt-2">
+              <div id="related-sites-list" class="tags"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Espaço para análise avançada de phishing (preenchido dinamicamente) -->
+      </div>
+    </div>
+  </div>
+  <!-- Nenhum JS framework necessário para o Bulma -->
+  <script src="popup.js" type="module"></script>
+  
+  <!-- Modal de carregamento removido -->
+</body>
+</html>

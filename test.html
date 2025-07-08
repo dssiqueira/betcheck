@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BetCheck - Teste</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Materialize CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Fonte Lexend -->
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Lexend', sans-serif;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+    }
+    .btn {
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h3>BetCheck - Teste de Modais</h3>
+    <p>Clique nos botões abaixo para testar os modais do Materialize CSS:</p>
+    
+    <div class="row">
+      <button id="test-modal" class="btn waves-effect waves-light purple">Testar Modal</button>
+      <button id="test-loading" class="btn waves-effect waves-light blue">Testar Loading</button>
+      <button id="test-error" class="btn waves-effect waves-light red">Testar Erro</button>
+    </div>
+    
+    <!-- Modal de teste -->
+    <div id="modal-test" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Modal de Teste</h4>
+          <button class="modal-close btn-flat"><i class="material-icons">close</i></button>
+        </div>
+        <div class="modal-body">
+          <p>Este é um modal de teste do Materialize CSS.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn waves-effect waves-light purple close-modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal de carregamento -->
+    <div id="loading-modal" class="modal">
+      <div class="modal-content">
+        <div class="center-align">
+          <div class="preloader-wrapper active">
+            <div class="spinner-layer spinner-purple-only">
+              <div class="circle-clipper left">
+                <div class="circle"></div>
+              </div>
+              <div class="gap-patch">
+                <div class="circle"></div>
+              </div>
+              <div class="circle-clipper right">
+                <div class="circle"></div>
+              </div>
+            </div>
+          </div>
+          <p style="margin-top: 16px">Carregando...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Materialize JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Inicializa os modais
+      var elems = document.querySelectorAll('.modal');
+      var instances = M.Modal.init(elems);
+      
+      // Botão de teste de modal
+      document.getElementById('test-modal').addEventListener('click', function() {
+        var modalInstance = M.Modal.getInstance(document.getElementById('modal-test'));
+        modalInstance.open();
+      });
+      
+      // Botão de teste de loading
+      document.getElementById('test-loading').addEventListener('click', function() {
+        var loadingInstance = M.Modal.getInstance(document.getElementById('loading-modal'));
+        loadingInstance.open();
+        
+        // Fecha o modal após 3 segundos
+        setTimeout(function() {
+          loadingInstance.close();
+        }, 3000);
+      });
+      
+      // Botão de teste de erro
+      document.getElementById('test-error').addEventListener('click', function() {
+        // Cria um modal de erro dinamicamente
+        var errorModal = document.createElement('div');
+        errorModal.className = 'modal';
+        errorModal.innerHTML = `
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Erro na consulta</h4>
+              <button class="modal-close btn-flat"><i class="material-icons">close</i></button>
+            </div>
+            <div class="modal-body">
+              <div>
+                <p>Não foi possível consultar os dados.</p>
+                <p>Erro: Teste de erro</p>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn waves-effect waves-light red close-modal">Fechar</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(errorModal);
+        
+        // Inicializa o modal com Materialize
+        var errorModalInstance = M.Modal.init(errorModal, {
+          onCloseEnd: function() {
+            document.body.removeChild(errorModal);
+          }
+        });
+        
+        // Abre o modal
+        errorModalInstance.open();
+        
+        // Configura os listeners para fechar o modal de erro
+        var closeButtons = errorModal.querySelectorAll('.modal-close, .close-modal');
+        closeButtons.forEach(function(button) {
+          button.addEventListener('click', function() {
+            errorModalInstance.close();
+          });
+        });
+      });
+      
+      // Configura os botões de fechar modal
+      document.querySelectorAll('.close-modal').forEach(function(button) {
+        button.addEventListener('click', function() {
+          var modal = button.closest('.modal');
+          var instance = M.Modal.getInstance(modal);
+          instance.close();
+        });
+      });
+    });
+  </script>
+</body>
+</html>

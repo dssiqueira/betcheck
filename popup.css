@@ -1,0 +1,104 @@
+/* Estilos para o popup da extensão BetCheck */
+
+/* Estilos para a análise avançada de phishing */
+.advanced-analysis {
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.advanced-analysis .card-content {
+  padding: 1.5rem;
+}
+
+.advanced-analysis .title {
+  color: #4a4a4a;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.advanced-analysis .loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.advanced-analysis .loading-indicator p {
+  margin-top: 1rem;
+  color: #7a7a7a;
+}
+
+/* Estilos para os níveis de risco */
+.notification.is-danger {
+  animation: pulse-danger 2s infinite;
+}
+
+.notification.is-warning {
+  animation: pulse-warning 3s infinite;
+}
+
+@keyframes pulse-danger {
+  0% {
+    box-shadow: 0 0 0 0 rgba(241, 70, 104, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(241, 70, 104, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(241, 70, 104, 0);
+  }
+}
+
+@keyframes pulse-warning {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 221, 87, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 221, 87, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 221, 87, 0);
+  }
+}
+
+/* Estilos para as tags */
+.tags .tag {
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tags .tag.is-success {
+  background-color: #48c774;
+  color: #fff;
+}
+
+/* Dicas de segurança */
+.notification.is-warning ul {
+  margin-left: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.notification.is-warning ul li {
+  margin-bottom: 0.5rem;
+}
+
+/* Animação de pulso para alertas */
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 56, 96, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 56, 96, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 56, 96, 0);
+  }
+}
