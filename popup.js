@@ -2,6 +2,7 @@
 import { consultarCNPJ, formatCNPJ } from './cnpj.js';
 import { advancedPhishingCheck, checkSuspiciousTerms, hasPhishingPattern } from './phishing-advanced.js';
 import { getFromCache, saveToCache } from './cache.js';
+import Stats from './stats.js';
 
 /**
  * Realiza uma análise simplificada de phishing para o domínio atual
@@ -224,7 +225,13 @@ function displayPhishingAnalysisResults(analysis) {
   analysisContent.innerHTML = html;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
+  // Inicializa as estatísticas
+  Stats.initialize();
+  
+  // Atualiza a UI do modal de informações com as estatísticas atuais
+  Stats.updateUI();
+
   const loadingElement = document.getElementById('loading');
   const resultElement = document.getElementById('result');
   const statusHero = document.getElementById('status-hero');
@@ -239,17 +246,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const phishingMessageElement = document.getElementById('phishing-message');
   const phishingSimilarSitesElement = document.getElementById('phishing-similar-sites');
   const phishingSimilarSitesListElement = document.getElementById('phishing-similar-sites-list');
-  
-  // Adiciona evento para fechar o alerta de phishing
-  const closeButton = phishingWarningElement.querySelector('.delete');
-  if (closeButton) {
-    closeButton.addEventListener('click', function() {
-      phishingWarningElement.classList.add('is-hidden');
-    });
-  }
-
   // Get the current tab URL
-  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+  chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
     try {
       const currentUrl = tabs[0].url;
       let hostname = new URL(currentUrl).hostname;
@@ -276,12 +274,16 @@ document.addEventListener('DOMContentLoaded', function() {
           // Site is approved
           statusHero.classList.add('has-background-success-light');
           statusIcon.innerHTML = '<i class="fas fa-check-circle fa-2x has-text-success"></i>';
-          statusMessage.textContent = "Site Homologado";
+          statusMessage.textContent = "Site de apostas homologado";
           
-          // Mostra o selo de verificação oficial
+          // Incrementa o contador de sites homologados
+          Stats.incrementApproved();
+          
+          // Exibe o selo de verificação
           document.getElementById('verification-badge').classList.remove('is-hidden');
           
-          // Adiciona a data de verificação (poderia ser obtida de uma API real)
+          // Exibe a data de verificação
+          document.getElementById('verification-date').classList.remove('is-hidden');
           const verificationDate = document.getElementById('verification-date');
           verificationDate.textContent = `Verificado em ${new Date().toLocaleDateString('pt-BR')}`;
           verificationDate.classList.remove('is-hidden');
@@ -402,6 +404,9 @@ document.addEventListener('DOMContentLoaded', function() {
           statusIcon.innerHTML = '<i class="fas fa-times-circle fa-2x has-text-danger"></i>';
           statusMessage.textContent = "Site Não Homologado";
           
+          // Incrementa o contador de sites suspeitos
+          Stats.incrementSuspicious();
+          
           // Esconde o selo de verificação e a data
           document.getElementById('verification-badge').classList.add('is-hidden');
           document.getElementById('verification-date').classList.add('is-hidden');
@@ -516,6 +521,37 @@ document.addEventListener('DOMContentLoaded', function() {
       relatedSitesElement.classList.add('is-hidden');
       
       console.error('Error checking site:', error);
+    }
+  });
+
+  // Configuração do modal de informações
+  const infoIcon = document.getElementById('info-icon');
+  const infoModal = document.getElementById('info-modal');
+  const closeButtons = document.querySelectorAll('#info-modal .delete, #info-modal .close-modal');
+
+  // Abre o modal quando o ícone de informação é clicado
+  infoIcon.addEventListener('click', () => {
+    // Atualiza as estatísticas antes de abrir o modal
+    Stats.updateUI();
+    infoModal.classList.add('is-active');
+  });
+
+  // Fecha o modal quando os botões de fechar são clicados
+  closeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      infoModal.classList.remove('is-active');
+    });
+  });
+
+  // Fecha o modal quando o fundo é clicado
+  document.querySelector('#info-modal .modal-background').addEventListener('click', () => {
+    infoModal.classList.remove('is-active');
+  });
+
+  // Fecha o modal quando a tecla ESC é pressionada
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && infoModal.classList.contains('is-active')) {
+      infoModal.classList.remove('is-active');
     }
   });
 });

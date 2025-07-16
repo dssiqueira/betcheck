@@ -232,6 +232,240 @@
       width: auto;
       margin: 0 10px;
     }
+    
+    /* Estilos para o ícone de informação */
+    .info-icon-container {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      z-index: 10;
+    }
+    
+    #info-icon {
+      color: rgba(255, 255, 255, 0.9);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    #info-icon:hover {
+      color: white;
+      transform: scale(1.2);
+    }
+    
+    /* Estilos para o modal de informações */
+    .has-background-gradient {
+      background: linear-gradient(135deg, #6200ea, #7c4dff);
+      color: white;
+    }
+    
+    .modal-header-content {
+      display: flex;
+      align-items: center;
+    }
+    
+    .modal-card-head {
+      position: relative;
+    }
+    
+    .modal-card-head .delete {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .modal-card-title {
+      font-weight: 600;
+      margin-left: 5px;
+    }
+    
+    .info-hero {
+      background: linear-gradient(135deg, #6200ea, #7c4dff);
+      color: white;
+      padding: 2rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 15px rgba(98, 0, 234, 0.2);
+      text-align: center;
+    }
+    
+    .info-hero-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .info-logo {
+      margin-bottom: 1rem;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .info-logo i {
+      color: white;
+    }
+    
+    .info-title h3 {
+      color: white;
+      margin-bottom: 0.5rem;
+    }
+    
+    .info-title .subtitle {
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .info-cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    
+    .info-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: flex-start;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .info-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .info-card-icon {
+      background: linear-gradient(135deg, #6200ea, #7c4dff);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 1rem;
+      flex-shrink: 0;
+    }
+    
+    .info-card-content {
+      flex: 1;
+    }
+    
+    .info-card-content .title {
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+    
+    .info-value {
+      font-size: 1.1rem;
+      color: #555;
+      margin-bottom: 0.5rem;
+    }
+    
+    .about-card, .stats-card {
+      grid-column: 1 / -1;
+    }
+    
+    /* Estilos para as estatísticas */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .stat-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .stat-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 1rem;
+      flex-shrink: 0;
+    }
+    
+    .stat-icon.approved {
+      background-color: rgba(72, 199, 116, 0.2);
+      color: #48c774;
+    }
+    
+    .stat-icon.suspicious {
+      background-color: rgba(241, 70, 104, 0.2);
+      color: #f14668;
+    }
+    
+    .stat-icon.total {
+      background-color: rgba(98, 0, 234, 0.2);
+      color: #6200ea;
+    }
+    
+    .stat-details {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .stat-label {
+      font-size: 0.85rem;
+      color: #777;
+      margin-bottom: 0.25rem;
+    }
+    
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .source-link, .developer-link {
+      display: inline-flex;
+      align-items: center;
+      color: #6200ea;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+    
+    .source-link:hover, .developer-link:hover {
+      color: #7c4dff;
+      text-decoration: underline;
+    }
+    
+    .modal-card-foot {
+      justify-content: flex-end;
+      background-color: #f9f9f9;
+    }
+    
+    .modal-card-foot .button.is-primary {
+      background: linear-gradient(135deg, #6200ea, #7c4dff);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .modal-card-foot .button.is-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(98, 0, 234, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -239,6 +473,11 @@
     <div class="hero is-primary is-small">
       <div class="hero-body">
         <div class="container has-text-centered">
+          <div class="info-icon-container">
+            <span id="info-icon" class="icon is-medium clickable-icon">
+              <i class="fas fa-info-circle"></i>
+            </span>
+          </div>
           <h1 class="title">
             <span class="icon-text">
               <span class="icon"><i class="fas fa-shield-alt"></i></span>
@@ -340,6 +579,144 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal de informações -->
+  <div id="info-modal" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head has-background-gradient">
+        <div class="modal-header-content">
+          <span class="icon-text">
+            <span class="icon"><i class="fas fa-shield-alt"></i></span>
+            <span class="modal-card-title">Sobre o BetCheck</span>
+          </span>
+        </div>
+        <button class="delete close-modal" aria-label="close"></button>
+      </header>
+      <section class="modal-card-body">
+        <div class="info-hero">
+          <div class="info-hero-content">
+            <div class="info-logo">
+              <i class="fas fa-shield-alt fa-3x"></i>
+            </div>
+            <div class="info-title">
+              <h3 class="title is-3">BetCheck</h3>
+              <p class="subtitle is-6">Verificador de sites de apostas homologados</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="info-cards-container">
+          <!-- Versão -->
+          <div class="info-card">
+            <div class="info-card-icon">
+              <i class="fas fa-code-branch"></i>
+            </div>
+            <div class="info-card-content">
+              <h5 class="title is-5">Versão</h5>
+              <p class="info-value">1.0.0</p>
+            </div>
+          </div>
+          
+          <!-- Última atualização -->
+          <div class="info-card">
+            <div class="info-card-icon">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="info-card-content">
+              <h5 class="title is-5">Última atualização</h5>
+              <p class="info-value">15/07/2025</p>
+              <a href="https://www.gov.br/fazenda/pt-br/composicao/orgaos/secretaria-de-premios-e-apostas/lista-de-empresas" target="_blank" class="source-link">
+                <span class="icon-text">
+                  <span class="icon"><i class="fas fa-external-link-alt"></i></span>
+                  <span>Fonte oficial</span>
+                </span>
+              </a>
+            </div>
+          </div>
+          
+          <!-- Desenvolvido por -->
+          <div class="info-card">
+            <div class="info-card-icon">
+              <i class="fas fa-code"></i>
+            </div>
+            <div class="info-card-content">
+              <h5 class="title is-5">Desenvolvido por</h5>
+              <p class="info-value">
+                <a href="https://dsiqueira.com/" target="_blank" class="developer-link">
+                  <span class="icon-text">
+                    <span class="icon"><i class="fas fa-user-circle"></i></span>
+                    <span>Dsiqueira</span>
+                  </span>
+                </a>
+              </p>
+            </div>
+          </div>
+          
+          <!-- Estatísticas de uso -->
+          <div class="info-card stats-card">
+            <div class="info-card-icon">
+              <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="info-card-content">
+              <h5 class="title is-5">Estatísticas</h5>
+              <div class="stats-container">
+                <div class="stat-item">
+                  <div class="stat-icon approved">
+                    <i class="fas fa-check-circle"></i>
+                  </div>
+                  <div class="stat-details">
+                    <span class="stat-label">Sites homologados</span>
+                    <span id="approved-count" class="stat-value">0</span>
+                  </div>
+                </div>
+                
+                <div class="stat-item">
+                  <div class="stat-icon suspicious">
+                    <i class="fas fa-exclamation-triangle"></i>
+                  </div>
+                  <div class="stat-details">
+                    <span class="stat-label">Sites suspeitos</span>
+                    <span id="suspicious-count" class="stat-value">0</span>
+                  </div>
+                </div>
+                
+                <div class="stat-item">
+                  <div class="stat-icon total">
+                    <i class="fas fa-globe"></i>
+                  </div>
+                  <div class="stat-details">
+                    <span class="stat-label">Total de verificações</span>
+                    <span id="total-count" class="stat-value">0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sobre a extensão -->
+          <div class="info-card about-card">
+            <div class="info-card-icon">
+              <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="info-card-content">
+              <h5 class="title is-5">Sobre a extensão</h5>
+              <p>O BetCheck é uma ferramenta para verificar se sites de apostas estão homologados pelo Ministério da Fazenda do Brasil. A extensão também ajuda a identificar possíveis sites de phishing relacionados a apostas.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <footer class="modal-card-foot">
+        <button class="button is-primary close-modal">
+          <span class="icon">
+            <i class="fas fa-check"></i>
+          </span>
+          <span>Fechar</span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
   <!-- Nenhum JS framework necessário para o Bulma -->
   <script src="popup.js" type="module"></script>
   

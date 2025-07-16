@@ -22,5 +22,11 @@
   ],
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["stats.js", "cnpj.js", "phishing-advanced.js", "cache.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
