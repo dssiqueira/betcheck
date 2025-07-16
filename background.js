@@ -7,22 +7,44 @@ async function parseCSV() {
     const response = await fetch('data/bets.csv');
     const csvText = await response.text();
     
-    // Split the CSV into lines
-    const lines = csvText.split('\n');
+    // Melhor tratamento para CSV com quebras de linha dentro de campos entre aspas
+    const result = [];
+    let inQuotes = false;
+    let currentLine = '';
+    let lines = [];
+    
+    // Primeiro, reconstruímos as linhas corretamente, respeitando aspas
+    for (let i = 0; i < csvText.length; i++) {
+      const char = csvText[i];
+      
+      if (char === '"') {
+        inQuotes = !inQuotes;
+        currentLine += char;
+      } else if (char === '\n' && !inQuotes) {
+        // Quebra de linha real (não dentro de aspas)
+        lines.push(currentLine);
+        currentLine = '';
+      } else {
+        currentLine += char;
+      }
+    }
+    
+    // Adiciona a última linha se houver conteúdo
+    if (currentLine.trim()) {
+      lines.push(currentLine);
+    }
     
     // Skip the header line
     const dataLines = lines.slice(1);
-    
-    const result = [];
     
     // Process each line
     for (const line of dataLines) {
       // Skip empty lines
       if (!line.trim()) continue;
       
-      // Handle CSV parsing with potential quotes and multi-line fields
+      // Parse CSV line
       let columns = [];
-      let inQuotes = false;
+      inQuotes = false;
       let currentColumn = '';
       
       for (let i = 0; i < line.length; i++) {
@@ -60,11 +82,15 @@ async function parseCSV() {
       // Only add entries that have valid domain (not 'não registrado' or 'à definir')
       if (entry.domain && 
           entry.domain !== 'não registrado' && 
-          entry.domain !== 'à definir') {
+          entry.domain !== 'à definir' &&
+          entry.domain !== 'a definir') {
+        // Log para debug
+        console.log(`Domínio adicionado: ${entry.domain}`);
         result.push(entry);
       }
     }
     
+    console.log(`Total de domínios carregados: ${result.length}`);
     return result;
   } catch (error) {
     console.error('Error parsing CSV:', error);
@@ -89,27 +115,28 @@ function checkDomain(domain, betsData) {
     domain;
   
   console.log('Checking domain:', domain, 'Base domain:', baseDomain);
+  console.log('Total de domínios na base:', betsData.length);
   
   // Check each entry in the bets data
   for (const entry of betsData) {
     // Skip invalid domains
-    if (!entry.domain || entry.domain === 'não registrado' || entry.domain === 'à definir') {
+    if (!entry.domain || entry.domain === 'não registrado' || entry.domain === 'à definir' || entry.domain === 'a definir') {
       continue;
     }
     
     // Normalize the bet domain
-    let normalizedBetDomain = entry.domain.toLowerCase();
+    let normalizedBetDomain = entry.domain.toLowerCase().trim();
     
     // Remove www. prefix if present in the bet domain
     if (normalizedBetDomain.startsWith('www.')) {
       normalizedBetDomain = normalizedBetDomain.substring(4);
     }
     
-    console.log('Comparing with:', normalizedBetDomain, 'from', entry.companyName);
+    console.log('Comparando:', domain, 'com:', normalizedBetDomain, 'de', entry.companyName);
     
     // Exact match is the safest approach
     if (domain === normalizedBetDomain) {
-      console.log('Exact match found');
+      console.log('Correspondência exata encontrada!');
       return {
         isApproved: true,
         companyName: entry.companyName,
@@ -122,7 +149,7 @@ function checkDomain(domain, betsData) {
     // Check if the domain is a subdomain of an approved domain
     // For example, sub.example.bet.br is a subdomain of example.bet.br
     if (domain.endsWith('.' + normalizedBetDomain)) {
-      console.log('Subdomain match found');
+      console.log('Correspondência de subdomínio encontrada!');
       return {
         isApproved: true,
         companyName: entry.companyName,
@@ -323,34 +350,24 @@ function calculateSimilarity(str1, str2) {
 
 // Function to check the status of a bet site
 function checkBetSiteStatus(url) {
-  // If data is not loaded yet, load it
-  if (!betsData) {
-    return parseCSV().then(data => {
-      betsData = data;
-      const result = checkDomain(url, betsData);
-      
-      // Se o site não for homologado, verifica se pode ser phishing
-      if (!result.isApproved) {
-        const phishingResult = checkPhishing(url, betsData);
-        if (phishingResult.isPhishing) {
-          result.phishingWarning = phishingResult;
-        }
-      }
-      
-      return result;
-    });
-  } else {
-    // Data is already loaded
+  // Sempre recarrega os dados para garantir que temos as informações mais recentes
+  // Isso resolve o problema de alterações no CSV não serem detectadas
+  return parseCSV().then(data => {
+    betsData = data;
+    console.log(`Verificando domínio: ${url}`);
     const result = checkDomain(url, betsData);
     
     // Se o site não for homologado, verifica se pode ser phishing
     if (!result.isApproved) {
+      console.log(`Domínio ${url} não aprovado, verificando phishing`);
       const phishingResult = checkPhishing(url, betsData);
       if (phishingResult.isPhishing) {
         result.phishingWarning = phishingResult;
       }
+    } else {
+      console.log(`Domínio ${url} aprovado!`);
     }
     
-    return Promise.resolve(result);
-  }
+    return result;
+  });
 }
