@@ -252,25 +252,58 @@ document.addEventListener('DOMContentLoaded', () => {
       const currentUrl = tabs[0].url;
       let hostname = new URL(currentUrl).hostname;
       
+      // Normaliza o hostname (remove www. e converte para minúsculas)
+      if (hostname.startsWith('www.')) {
+        hostname = hostname.substring(4);
+      }
+      hostname = hostname.toLowerCase();
+      
       // Adiciona log para debug
       console.log('URL atual:', currentUrl);
-      console.log('Hostname extraído:', hostname);
+      console.log('Hostname normalizado:', hostname);
       
-      // Caso especial para sporty.bet.br
-      if (hostname.includes('sporty.bet.br')) {
-        hostname = 'sporty.bet.br';
-        console.log('Caso especial detectado para sporty.bet.br');
-      }
+      // Adiciona um botão para recarregar os dados
+      const reloadButton = document.createElement('button');
+      reloadButton.className = 'button is-small is-info is-light mb-2';
+      reloadButton.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Recarregar dados';
+      reloadButton.style.marginBottom = '10px';
+      reloadButton.style.display = 'block';
+      reloadButton.style.marginLeft = 'auto';
+      reloadButton.style.marginRight = 'auto';
+      reloadButton.onclick = function() {
+        // Mostra o spinner de carregamento
+        loadingElement.classList.remove('is-hidden');
+        resultElement.classList.add('is-hidden');
+        
+        // Força a recarga dos dados
+        checkCurrentSite(true);
+      };
       
-      // Send message to background script to check if the site is approved
-      chrome.runtime.sendMessage({action: "checkBetSite", url: hostname}, function(response) {
-        // Hide loading spinner
-        loadingElement.classList.add('is-hidden');
+      // Adiciona o botão ao topo do container de resultados
+      resultElement.insertBefore(reloadButton, resultElement.firstChild);
+      
+      // Inicia a verificação do site - sempre força recarga na primeira abertura
+      checkCurrentSite(true);
+      
+      // Função para verificar o site atual
+      function checkCurrentSite(forceReload = false) {
+        console.log(`Verificando site ${hostname} (forceReload: ${forceReload})`);
         
-        // Show result container
-        resultElement.classList.remove('is-hidden');
+        // Mostra o spinner de carregamento
+        loadingElement.classList.remove('is-hidden');
+        resultElement.classList.add('is-hidden');
         
-        if (response && response.isApproved) {
+        try {
+          // Send message to background script to check if the site is approved
+          chrome.runtime.sendMessage({action: "checkBetSite", url: hostname, forceReload: forceReload}, function(response) {
+            // Hide loading spinner
+            loadingElement.classList.add('is-hidden');
+            
+            // Show result container
+            resultElement.classList.remove('is-hidden');
+            
+            // Processa a resposta
+            if (response && response.isApproved) {
           // Site is approved
           statusHero.classList.add('has-background-success-light');
           statusIcon.innerHTML = '<i class="fas fa-check-circle fa-2x has-text-success"></i>';
@@ -339,14 +372,48 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           
           // Display related sites if available
+          console.log('Verificando sites relacionados:', response.relatedSites);
+          console.log('Hostname atual:', hostname);
+          
           if (response.relatedSites && response.relatedSites.length > 0) {
+            console.log(`Encontrados ${response.relatedSites.length} sites relacionados`);
             // Clear previous content
             relatedSitesListElement.innerHTML = '';
             
+            // Adiciona título para a seção de sites relacionados
+            const titleElement = document.createElement('p');
+            titleElement.className = 'has-text-weight-bold mb-2';
+            titleElement.textContent = 'Sites relacionados da mesma empresa:';
+            relatedSitesListElement.appendChild(titleElement);
+            
             // Add each related site as a tag
             response.relatedSites.forEach(site => {
-              // Skip the current site
-              if (hostname.includes(site.domain)) {
+              console.log(`Processando site relacionado: ${site.domain} (${site.brand})`);
+              
+              // Normaliza o domínio do site relacionado
+              let normalizedRelatedDomain = site.domain.toLowerCase();
+              if (normalizedRelatedDomain.startsWith('www.')) {
+                normalizedRelatedDomain = normalizedRelatedDomain.substring(4);
+              }
+              
+              console.log(`Domínio relacionado normalizado: ${normalizedRelatedDomain}`);
+              console.log(`Comparando com hostname atual: ${hostname}`);
+              
+              // Skip the current site - comparação mais precisa
+              if (hostname === normalizedRelatedDomain) {
+                console.log(`Ignorando site atual (correspondência exata): ${site.domain}`);
+                return;
+              }
+              
+              // Também verifica se o domínio atual é um subdomínio do site relacionado
+              if (hostname.endsWith('.' + normalizedRelatedDomain)) {
+                console.log(`Ignorando site atual (subdomínio): ${site.domain}`);
+                return;
+              }
+              
+              // Verifica se o site relacionado é um subdomínio do domínio atual
+              if (normalizedRelatedDomain.endsWith('.' + hostname)) {
+                console.log(`Ignorando site relacionado (subdomínio do atual): ${site.domain}`);
                 return;
               }
               
@@ -496,31 +563,44 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       });
+        } catch (innerError) {
+          console.error('Erro ao processar resposta:', innerError);
+          
+          // Exibe mensagem de erro
+          handleError(innerError);
+        }
+      }
+      
+      // Função para lidar com erros
+      function handleError(error) {
+        // Hide loading spinner
+        loadingElement.classList.add('is-hidden');
+        
+        // Show result with error
+        resultElement.classList.remove('is-hidden');
+        statusHero.classList.add('has-background-warning-light');
+        statusIcon.innerHTML = '<i class="fas fa-exclamation-triangle fa-2x has-text-warning"></i>';
+        statusMessage.textContent = "Erro ao verificar o site";
+        
+        // Esconde o selo de verificação e a data
+        document.getElementById('verification-badge').classList.add('is-hidden');
+        document.getElementById('verification-date').classList.add('is-hidden');
+        
+        // Adiciona mensagem de erro mais detalhada
+        const errorMessage = document.createElement('p');
+        errorMessage.className = 'has-text-centered mt-2 has-text-grey';
+        errorMessage.textContent = 'Ocorreu um erro ao verificar este site. Por favor, tente novamente mais tarde.';
+        statusHero.querySelector('.has-text-centered').appendChild(errorMessage);
+        
+        // Hide details and related sites
+        detailsElement.classList.add('is-hidden');
+        relatedSitesElement.classList.add('is-hidden');
+        
+        console.error('Error checking site:', error);
+      }
     } catch (error) {
-      // Hide loading spinner
-      loadingElement.classList.add('is-hidden');
-      
-      // Show result with error
-      resultElement.classList.remove('is-hidden');
-      statusHero.classList.add('has-background-warning-light');
-      statusIcon.innerHTML = '<i class="fas fa-exclamation-triangle fa-2x has-text-warning"></i>';
-      statusMessage.textContent = "Erro ao verificar o site";
-      
-      // Esconde o selo de verificação e a data
-      document.getElementById('verification-badge').classList.add('is-hidden');
-      document.getElementById('verification-date').classList.add('is-hidden');
-      
-      // Adiciona mensagem de erro mais detalhada
-      const errorMessage = document.createElement('p');
-      errorMessage.className = 'has-text-centered mt-2 has-text-grey';
-      errorMessage.textContent = 'Ocorreu um erro ao verificar este site. Por favor, tente novamente mais tarde.';
-      statusHero.querySelector('.has-text-centered').appendChild(errorMessage);
-      
-      // Hide details and related sites
-      detailsElement.classList.add('is-hidden');
-      relatedSitesElement.classList.add('is-hidden');
-      
-      console.error('Error checking site:', error);
+      // Se ocorrer um erro ao processar a URL ou qualquer outra operação fora da função checkCurrentSite
+      handleError(error);
     }
   });
 

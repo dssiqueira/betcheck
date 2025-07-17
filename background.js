@@ -1,10 +1,51 @@
 // Cache for the parsed CSV data
 let betsData = null;
 
+// Variável para rastrear quando os dados foram carregados pela última vez
+let lastCheckTime = null;
+
+// Função para calcular a similaridade entre duas strings (distância de Levenshtein normalizada)
+function calculateSimilarity(str1, str2) {
+  // Se as strings são idênticas, a similaridade é 1
+  if (str1 === str2) return 1.0;
+  
+  // Se alguma string é vazia, a similaridade é 0
+  if (str1.length === 0 || str2.length === 0) return 0.0;
+  
+  // Matriz para o algoritmo de distância de Levenshtein
+  const matrix = [];
+  
+  // Inicializa a primeira linha e coluna da matriz
+  for (let i = 0; i <= str1.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= str2.length; j++) matrix[0][j] = j;
+  
+  // Preenche a matriz
+  for (let i = 1; i <= str1.length; i++) {
+    for (let j = 1; j <= str2.length; j++) {
+      const cost = str1[i-1] === str2[j-1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i-1][j] + 1,      // deleção
+        matrix[i][j-1] + 1,      // inserção
+        matrix[i-1][j-1] + cost  // substituição
+      );
+    }
+  }
+  
+  // A distância de Levenshtein é o valor na posição final da matriz
+  const distance = matrix[str1.length][str2.length];
+  
+  // Normaliza a distância para um valor entre 0 e 1
+  // Onde 1 significa strings idênticas e 0 significa completamente diferentes
+  const maxLength = Math.max(str1.length, str2.length);
+  return 1 - (distance / maxLength);
+}
+
 // Function to parse CSV data
-async function parseCSV() {
+async function parseCSV(forceReload = false) {
   try {
-    const response = await fetch('data/bets.csv');
+    // Adiciona um timestamp à URL para evitar o cache do navegador
+    const timestamp = forceReload ? `?t=${Date.now()}` : '';
+    const response = await fetch(`data/bets.csv${timestamp}`);
     const csvText = await response.text();
     
     // Melhor tratamento para CSV com quebras de linha dentro de campos entre aspas
@@ -117,7 +158,13 @@ function checkDomain(domain, betsData) {
   console.log('Checking domain:', domain, 'Base domain:', baseDomain);
   console.log('Total de domínios na base:', betsData.length);
   
-  // Check each entry in the bets data
+  // Imprimir os primeiros 10 domínios da base para debug
+  console.log('Primeiros 10 domínios na base:');
+  for (let i = 0; i < Math.min(10, betsData.length); i++) {
+    console.log(`${i+1}. ${betsData[i].domain} (${betsData[i].companyName})`);
+  }
+  
+  // ETAPA 1: Verificar correspondência exata
   for (const entry of betsData) {
     // Skip invalid domains
     if (!entry.domain || entry.domain === 'não registrado' || entry.domain === 'à definir' || entry.domain === 'a definir') {
@@ -132,9 +179,7 @@ function checkDomain(domain, betsData) {
       normalizedBetDomain = normalizedBetDomain.substring(4);
     }
     
-    console.log('Comparando:', domain, 'com:', normalizedBetDomain, 'de', entry.companyName);
-    
-    // Exact match is the safest approach
+    // Exact match
     if (domain === normalizedBetDomain) {
       console.log('Correspondência exata encontrada!');
       return {
@@ -142,12 +187,21 @@ function checkDomain(domain, betsData) {
         companyName: entry.companyName,
         cnpj: entry.cnpj,
         domain: normalizedBetDomain,
-        relatedSites: findRelatedSites(entry.cnpj, betsData)
+        relatedSites: findRelatedSites(entry.cnpj, betsData, domain)
       };
+    }
+  }
+  
+  // ETAPA 2: Verificar subdomínios
+  for (const entry of betsData) {
+    if (!entry.domain) continue;
+    
+    let normalizedBetDomain = entry.domain.toLowerCase().trim();
+    if (normalizedBetDomain.startsWith('www.')) {
+      normalizedBetDomain = normalizedBetDomain.substring(4);
     }
     
     // Check if the domain is a subdomain of an approved domain
-    // For example, sub.example.bet.br is a subdomain of example.bet.br
     if (domain.endsWith('.' + normalizedBetDomain)) {
       console.log('Correspondência de subdomínio encontrada!');
       return {
@@ -155,63 +209,191 @@ function checkDomain(domain, betsData) {
         companyName: entry.companyName,
         cnpj: entry.cnpj,
         domain: normalizedBetDomain,
-        relatedSites: findRelatedSites(entry.cnpj, betsData)
+        relatedSites: findRelatedSites(entry.cnpj, betsData, domain)
       };
     }
     
-    // Caso especial para sporty.bet.br
-    if (domain === 'sporty.bet.br' || domain.includes('sporty.bet.br')) {
-      console.log('Special case: sporty.bet.br match found');
-      // Retorna informações específicas para sporty.bet.br
-      return {
-        isApproved: true,
-        companyName: "BLAC JOGOS LTDA",
-        cnpj: "55.988.317/0001-70",
-        domain: "sporty.bet.br",
-        relatedSites: [] // Não há sites relacionados ou serão calculados separadamente
-      };
-    }
-    
-    // Verificar se o domínio atual pode ser um subdomínio com caminho adicional
-    // Por exemplo, sporty.bet.br/br/ seria identificado como sporty.bet.br
-    if (normalizedBetDomain.includes(domain) || domain.includes(normalizedBetDomain)) {
-      console.log('Partial match found');
+    // Check if approved domain is a subdomain of the current domain
+    if (normalizedBetDomain.endsWith('.' + domain)) {
+      console.log('Domínio aprovado é subdomínio do domínio atual!');
       return {
         isApproved: true,
         companyName: entry.companyName,
         cnpj: entry.cnpj,
         domain: normalizedBetDomain,
-        relatedSites: findRelatedSites(entry.cnpj, betsData)
+        relatedSites: findRelatedSites(entry.cnpj, betsData, domain)
       };
     }
   }
   
-  console.log('No match found');
+  // ETAPA 3: Verificar correspondências parciais
+  for (const entry of betsData) {
+    if (!entry.domain) continue;
+    
+    let normalizedBetDomain = entry.domain.toLowerCase().trim();
+    if (normalizedBetDomain.startsWith('www.')) {
+      normalizedBetDomain = normalizedBetDomain.substring(4);
+    }
+    
+    // Verificar se um domínio contém o outro
+    if (normalizedBetDomain.includes(domain) || domain.includes(normalizedBetDomain)) {
+      // Verificar se é uma correspondência significativa (não apenas uma letra ou duas)
+      if (domain.length > 3 && normalizedBetDomain.length > 3) {
+        console.log('Correspondência parcial significativa encontrada!');
+        return {
+          isApproved: true,
+          companyName: entry.companyName,
+          cnpj: entry.cnpj,
+          domain: normalizedBetDomain,
+          relatedSites: findRelatedSites(entry.cnpj, betsData, domain)
+        };
+      }
+    }
+    
+    // Verificar se os domínios são muito similares (podem ter erros de digitação)
+    const similarity = calculateSimilarity(domain, normalizedBetDomain);
+    if (similarity > 0.85) { // 85% de similaridade é um bom limiar
+      console.log(`Alta similaridade (${similarity.toFixed(2)}) encontrada entre ${domain} e ${normalizedBetDomain}`);
+      return {
+        isApproved: true,
+        companyName: entry.companyName,
+        cnpj: entry.cnpj,
+        domain: normalizedBetDomain,
+        relatedSites: findRelatedSites(entry.cnpj, betsData, domain)
+      };
+    }
+  }
+  
+  // ETAPA 4: Verificar se o domínio atual é um subdomínio de qualquer domínio na lista
+  // Por exemplo, se temos bet.br na lista e estamos verificando example.bet.br
+  for (const entry of betsData) {
+    if (!entry.domain) continue;
+    
+    let normalizedBetDomain = entry.domain.toLowerCase().trim();
+    if (normalizedBetDomain.startsWith('www.')) {
+      normalizedBetDomain = normalizedBetDomain.substring(4);
+    }
+    
+    // Verificar se o domínio atual termina com o domínio da lista
+    // Mas primeiro garantir que não é apenas uma terminação comum como .com.br
+    if (normalizedBetDomain.length > 7 && domain.endsWith(normalizedBetDomain)) {
+      console.log(`Domínio atual termina com domínio homologado: ${normalizedBetDomain}`);
+      return {
+        isApproved: true,
+        companyName: entry.companyName,
+        cnpj: entry.cnpj,
+        domain: normalizedBetDomain,
+        relatedSites: findRelatedSites(entry.cnpj, betsData, domain)
+      };
+    }
+  }
+  
+  // ETAPA 5: Verificar se o domínio base (exemplo.com.br) corresponde
+  for (const entry of betsData) {
+    if (!entry.domain) continue;
+    
+    let normalizedBetDomain = entry.domain.toLowerCase().trim();
+    if (normalizedBetDomain.startsWith('www.')) {
+      normalizedBetDomain = normalizedBetDomain.substring(4);
+    }
+    
+    // Extrair o domínio base da entrada
+    const entryDomainParts = normalizedBetDomain.split('.');
+    const entryBaseDomain = entryDomainParts.length >= 2 ? 
+      `${entryDomainParts[entryDomainParts.length - 2]}.${entryDomainParts[entryDomainParts.length - 1]}` : 
+      normalizedBetDomain;
+    
+    // Verificar se os domínios base correspondem
+    if (baseDomain === entryBaseDomain && baseDomain.length > 5) { // Evitar falsos positivos com domínios muito curtos
+      console.log(`Domínios base correspondem: ${baseDomain} = ${entryBaseDomain}`);
+      return {
+        isApproved: true,
+        companyName: entry.companyName,
+        cnpj: entry.cnpj,
+        domain: normalizedBetDomain,
+        relatedSites: findRelatedSites(entry.cnpj, betsData, domain)
+      };
+    }
+  }
+  
+  console.log('Nenhuma correspondência encontrada para:', domain);
   return { isApproved: false };
 }
 
 // Function to find related sites with the same CNPJ
-function findRelatedSites(cnpj, betsData) {
+function findRelatedSites(cnpj, betsData, currentDomain = '') {
   const relatedSites = [];
   
+  // Normaliza o domínio atual para comparação
+  let normalizedCurrentDomain = '';
+  if (currentDomain) {
+    normalizedCurrentDomain = currentDomain.toLowerCase();
+    if (normalizedCurrentDomain.startsWith('www.')) {
+      normalizedCurrentDomain = normalizedCurrentDomain.substring(4);
+    }
+  }
+  
+  console.log(`Procurando sites relacionados para CNPJ: ${cnpj}`);
+  console.log(`Total de entradas na base de dados: ${betsData.length}`);
+  console.log(`Domínio atual (para exclusão): ${normalizedCurrentDomain}`);
+  
+  // Debug: Verificar todas as entradas com o mesmo CNPJ
+  const entriesWithSameCnpj = betsData.filter(entry => entry.cnpj === cnpj);
+  console.log(`Entradas com CNPJ ${cnpj}:`, entriesWithSameCnpj);
+  console.log(`Número de entradas com o mesmo CNPJ: ${entriesWithSameCnpj.length}`);
+  
+  // Verificar se o CNPJ é válido
+  if (!cnpj || cnpj === 'undefined' || cnpj === 'null') {
+    console.error('CNPJ inválido:', cnpj);
+    return [];
+  }
+  
+  // Primeiro, colete todos os domínios válidos com o mesmo CNPJ
+  const validDomains = [];
+  
   for (const entry of betsData) {
-    // Skip invalid domains or entries without CNPJ
+    // Verifica se a entrada tem CNPJ e domínio válidos
     if (!entry.domain || !entry.cnpj || 
         entry.domain === 'não registrado' || 
-        entry.domain === 'à definir') {
+        entry.domain === 'à definir' || 
+        entry.domain === 'a definir') {
       continue;
     }
     
-    // If the CNPJ matches and it's a valid domain, add it to related sites
+    // Normaliza o domínio da entrada
+    let normalizedEntryDomain = entry.domain.toLowerCase().trim();
+    if (normalizedEntryDomain.startsWith('www.')) {
+      normalizedEntryDomain = normalizedEntryDomain.substring(4);
+    }
+    
+    // Se o CNPJ corresponde e não é o domínio atual
     if (entry.cnpj === cnpj) {
-      relatedSites.push({
+      // Adiciona à lista de domínios válidos
+      validDomains.push({
         domain: entry.domain,
+        normalizedDomain: normalizedEntryDomain,
         brand: entry.brand || entry.companyName
       });
     }
   }
   
-  console.log(`Found ${relatedSites.length} related sites for CNPJ ${cnpj}`);
+  console.log(`Domínios válidos encontrados para CNPJ ${cnpj}:`, validDomains);
+  
+  // Agora, adicione à lista de sites relacionados apenas os que não são o domínio atual
+  for (const site of validDomains) {
+    // Verifica se não é o domínio atual
+    if (site.normalizedDomain !== normalizedCurrentDomain) {
+      console.log(`Adicionando site relacionado: ${site.domain} (${site.brand})`);
+      relatedSites.push({
+        domain: site.domain,
+        brand: site.brand
+      });
+    } else {
+      console.log(`Ignorando domínio atual: ${site.domain}`);
+    }
+  }
+  
+  console.log(`Encontrados ${relatedSites.length} sites relacionados para CNPJ ${cnpj}:`, relatedSites);
   return relatedSites;
 }
 
@@ -227,7 +409,11 @@ importScripts('phishing.js');
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "checkBetSite") {
-    checkBetSiteStatus(message.url).then(result => {
+    // Verifica se deve forçar o recarregamento dos dados
+    const forceReload = message.forceReload === true;
+    console.log(`Verificando site ${message.url} (forceReload: ${forceReload})`);
+    
+    checkBetSiteStatus(message.url, forceReload).then(result => {
       sendResponse(result);
     });
     return true; // Required to use sendResponse asynchronously
@@ -347,16 +533,12 @@ function calculateSimilarity(str1, str2) {
   
   return 1.0 - distance / maxLen;
 }
-
-// Function to check the status of a bet site
-function checkBetSiteStatus(url) {
-  // Sempre recarrega os dados para garantir que temos as informações mais recentes
-  // Isso resolve o problema de alterações no CSV não serem detectadas
-  return parseCSV().then(data => {
-    betsData = data;
-    console.log(`Verificando domínio: ${url}`);
-    const result = checkDomain(url, betsData);
-    
+// Function to check the status of a betting site
+function checkBetSiteStatus(url, forceReload = false) {
+  console.log(`Verificando status do site: ${url} (forceReload: ${forceReload})`);
+  
+  // Função para processar o resultado e verificar phishing
+  const processResult = (result) => {
     // Se o site não for homologado, verifica se pode ser phishing
     if (!result.isApproved) {
       console.log(`Domínio ${url} não aprovado, verificando phishing`);
@@ -367,7 +549,31 @@ function checkBetSiteStatus(url) {
     } else {
       console.log(`Domínio ${url} aprovado!`);
     }
-    
     return result;
-  });
+  };
+  
+  // Sempre recarregar os dados quando o popup é aberto pela primeira vez
+  // ou quando forceReload é true
+  const shouldReload = forceReload || !lastCheckTime || (Date.now() - lastCheckTime > 60000); // 1 minuto
+  
+  if (shouldReload) {
+    console.log('Recarregando dados do CSV...');
+    return parseCSV(true).then(data => {
+      betsData = data;
+      lastCheckTime = Date.now();
+      console.log(`Dados do CSV recarregados. Total de entradas: ${betsData.length}`);
+      console.log(`Verificando domínio: ${url}`);
+      const result = checkDomain(url, betsData);
+      return processResult(result);
+    }).catch(error => {
+      console.error('Erro ao verificar status do site de apostas (com recarga):', error);
+      return { isApproved: false, error: error.message };
+    });
+  } else {
+    // Usa os dados já carregados
+    console.log(`Usando dados já carregados. Total de entradas: ${betsData.length}`);
+    console.log(`Verificando domínio: ${url}`);
+    const result = checkDomain(url, betsData);
+    return Promise.resolve(processResult(result));
+  }
 }
