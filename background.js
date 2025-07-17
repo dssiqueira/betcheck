@@ -155,15 +155,6 @@ function checkDomain(domain, betsData) {
     `${domainParts[domainParts.length - 2]}.${domainParts[domainParts.length - 1]}` : 
     domain;
   
-  console.log('Checking domain:', domain, 'Base domain:', baseDomain);
-  console.log('Total de domínios na base:', betsData.length);
-  
-  // Imprimir os primeiros 10 domínios da base para debug
-  console.log('Primeiros 10 domínios na base:');
-  for (let i = 0; i < Math.min(10, betsData.length); i++) {
-    console.log(`${i+1}. ${betsData[i].domain} (${betsData[i].companyName})`);
-  }
-  
   // ETAPA 1: Verificar correspondência exata
   for (const entry of betsData) {
     // Skip invalid domains
@@ -181,7 +172,6 @@ function checkDomain(domain, betsData) {
     
     // Exact match
     if (domain === normalizedBetDomain) {
-      console.log('Correspondência exata encontrada!');
       return {
         isApproved: true,
         companyName: entry.companyName,
@@ -203,7 +193,6 @@ function checkDomain(domain, betsData) {
     
     // Check if the domain is a subdomain of an approved domain
     if (domain.endsWith('.' + normalizedBetDomain)) {
-      console.log('Correspondência de subdomínio encontrada!');
       return {
         isApproved: true,
         companyName: entry.companyName,
@@ -215,7 +204,6 @@ function checkDomain(domain, betsData) {
     
     // Check if approved domain is a subdomain of the current domain
     if (normalizedBetDomain.endsWith('.' + domain)) {
-      console.log('Domínio aprovado é subdomínio do domínio atual!');
       return {
         isApproved: true,
         companyName: entry.companyName,
@@ -239,7 +227,6 @@ function checkDomain(domain, betsData) {
     if (normalizedBetDomain.includes(domain) || domain.includes(normalizedBetDomain)) {
       // Verificar se é uma correspondência significativa (não apenas uma letra ou duas)
       if (domain.length > 3 && normalizedBetDomain.length > 3) {
-        console.log('Correspondência parcial significativa encontrada!');
         return {
           isApproved: true,
           companyName: entry.companyName,
@@ -253,7 +240,6 @@ function checkDomain(domain, betsData) {
     // Verificar se os domínios são muito similares (podem ter erros de digitação)
     const similarity = calculateSimilarity(domain, normalizedBetDomain);
     if (similarity > 0.85) { // 85% de similaridade é um bom limiar
-      console.log(`Alta similaridade (${similarity.toFixed(2)}) encontrada entre ${domain} e ${normalizedBetDomain}`);
       return {
         isApproved: true,
         companyName: entry.companyName,
@@ -305,7 +291,6 @@ function checkDomain(domain, betsData) {
     
     // Verificar se os domínios base correspondem
     if (baseDomain === entryBaseDomain && baseDomain.length > 5) { // Evitar falsos positivos com domínios muito curtos
-      console.log(`Domínios base correspondem: ${baseDomain} = ${entryBaseDomain}`);
       return {
         isApproved: true,
         companyName: entry.companyName,
@@ -316,7 +301,6 @@ function checkDomain(domain, betsData) {
     }
   }
   
-  console.log('Nenhuma correspondência encontrada para:', domain);
   return { isApproved: false };
 }
 
@@ -333,18 +317,24 @@ function findRelatedSites(cnpj, betsData, currentDomain = '') {
     }
   }
   
-  console.log(`Procurando sites relacionados para CNPJ: ${cnpj}`);
-  console.log(`Total de entradas na base de dados: ${betsData.length}`);
-  console.log(`Domínio atual (para exclusão): ${normalizedCurrentDomain}`);
-  
-  // Debug: Verificar todas as entradas com o mesmo CNPJ
-  const entriesWithSameCnpj = betsData.filter(entry => entry.cnpj === cnpj);
-  console.log(`Entradas com CNPJ ${cnpj}:`, entriesWithSameCnpj);
-  console.log(`Número de entradas com o mesmo CNPJ: ${entriesWithSameCnpj.length}`);
-  
   // Verificar se o CNPJ é válido
   if (!cnpj || cnpj === 'undefined' || cnpj === 'null') {
     console.error('CNPJ inválido:', cnpj);
+    return [];
+  }
+  
+  // Normaliza o CNPJ para garantir comparação correta
+  const normalizedCnpj = cnpj.trim();
+  
+  // Verificar todas as entradas com o mesmo CNPJ
+  const entriesWithSameCnpj = betsData.filter(entry => {
+    // Normaliza o CNPJ da entrada para comparação
+    const normalizedEntryCnpj = entry.cnpj ? entry.cnpj.trim() : '';
+    return normalizedEntryCnpj === normalizedCnpj;
+  });
+  
+  // Se só tem uma entrada com esse CNPJ, não há sites relacionados
+  if (entriesWithSameCnpj.length <= 1) {
     return [];
   }
   
@@ -360,14 +350,17 @@ function findRelatedSites(cnpj, betsData, currentDomain = '') {
       continue;
     }
     
+    // Normaliza o CNPJ da entrada
+    const normalizedEntryCnpj = entry.cnpj.trim();
+    
     // Normaliza o domínio da entrada
     let normalizedEntryDomain = entry.domain.toLowerCase().trim();
     if (normalizedEntryDomain.startsWith('www.')) {
       normalizedEntryDomain = normalizedEntryDomain.substring(4);
     }
     
-    // Se o CNPJ corresponde e não é o domínio atual
-    if (entry.cnpj === cnpj) {
+    // Comparação estrita de CNPJ
+    if (normalizedEntryCnpj === normalizedCnpj) {
       // Adiciona à lista de domínios válidos
       validDomains.push({
         domain: entry.domain,
@@ -377,23 +370,17 @@ function findRelatedSites(cnpj, betsData, currentDomain = '') {
     }
   }
   
-  console.log(`Domínios válidos encontrados para CNPJ ${cnpj}:`, validDomains);
-  
   // Agora, adicione à lista de sites relacionados apenas os que não são o domínio atual
   for (const site of validDomains) {
     // Verifica se não é o domínio atual
     if (site.normalizedDomain !== normalizedCurrentDomain) {
-      console.log(`Adicionando site relacionado: ${site.domain} (${site.brand})`);
       relatedSites.push({
         domain: site.domain,
         brand: site.brand
       });
-    } else {
-      console.log(`Ignorando domínio atual: ${site.domain}`);
     }
   }
   
-  console.log(`Encontrados ${relatedSites.length} sites relacionados para CNPJ ${cnpj}:`, relatedSites);
   return relatedSites;
 }
 
@@ -409,11 +396,9 @@ importScripts('phishing.js');
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "checkBetSite") {
-    // Verifica se deve forçar o recarregamento dos dados
-    const forceReload = message.forceReload === true;
-    console.log(`Verificando site ${message.url} (forceReload: ${forceReload})`);
+    console.log(`Recebida solicitação para verificar site: ${message.url}`);
     
-    checkBetSiteStatus(message.url, forceReload).then(result => {
+    checkBetSiteStatus(message.url).then(result => {
       sendResponse(result);
     });
     return true; // Required to use sendResponse asynchronously
@@ -534,45 +519,38 @@ function calculateSimilarity(str1, str2) {
   return 1.0 - distance / maxLen;
 }
 // Function to check the status of a betting site
-function checkBetSiteStatus(url, forceReload = false) {
-  console.log(`Verificando status do site: ${url} (forceReload: ${forceReload})`);
-  
+function checkBetSiteStatus(url) {
   // Função para processar o resultado e verificar phishing
   const processResult = (result) => {
     // Se o site não for homologado, verifica se pode ser phishing
     if (!result.isApproved) {
-      console.log(`Domínio ${url} não aprovado, verificando phishing`);
       const phishingResult = checkPhishing(url, betsData);
       if (phishingResult.isPhishing) {
         result.phishingWarning = phishingResult;
       }
-    } else {
-      console.log(`Domínio ${url} aprovado!`);
     }
     return result;
   };
   
-  // Sempre recarregar os dados quando o popup é aberto pela primeira vez
-  // ou quando forceReload é true
-  const shouldReload = forceReload || !lastCheckTime || (Date.now() - lastCheckTime > 60000); // 1 minuto
+  // Verifica se os dados precisam ser recarregados
+  // Recarrega se: 
+  // 1. Não temos dados carregados
+  // 2. É a primeira verificação (lastCheckTime é null)
+  // 3. Os dados foram carregados há mais de 30 segundos
+  const shouldReload = !betsData || !lastCheckTime || (Date.now() - lastCheckTime > 30000); // 30 segundos
   
   if (shouldReload) {
-    console.log('Recarregando dados do CSV...');
     return parseCSV(true).then(data => {
       betsData = data;
       lastCheckTime = Date.now();
-      console.log(`Dados do CSV recarregados. Total de entradas: ${betsData.length}`);
-      console.log(`Verificando domínio: ${url}`);
       const result = checkDomain(url, betsData);
       return processResult(result);
     }).catch(error => {
-      console.error('Erro ao verificar status do site de apostas (com recarga):', error);
+      console.error('Erro ao verificar status do site de apostas:', error);
       return { isApproved: false, error: error.message };
     });
   } else {
     // Usa os dados já carregados
-    console.log(`Usando dados já carregados. Total de entradas: ${betsData.length}`);
-    console.log(`Verificando domínio: ${url}`);
     const result = checkDomain(url, betsData);
     return Promise.resolve(processResult(result));
   }

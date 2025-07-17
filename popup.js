@@ -262,32 +262,15 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('URL atual:', currentUrl);
       console.log('Hostname normalizado:', hostname);
       
-      // Adiciona um botão para recarregar os dados
-      const reloadButton = document.createElement('button');
-      reloadButton.className = 'button is-small is-info is-light mb-2';
-      reloadButton.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Recarregar dados';
-      reloadButton.style.marginBottom = '10px';
-      reloadButton.style.display = 'block';
-      reloadButton.style.marginLeft = 'auto';
-      reloadButton.style.marginRight = 'auto';
-      reloadButton.onclick = function() {
-        // Mostra o spinner de carregamento
-        loadingElement.classList.remove('is-hidden');
-        resultElement.classList.add('is-hidden');
-        
-        // Força a recarga dos dados
-        checkCurrentSite(true);
-      };
+      // O botão de recarregar dados foi removido, pois agora implementamos um sistema automático
+      // de recarga de dados que verifica se os dados estão atualizados sempre que o popup é aberto
       
-      // Adiciona o botão ao topo do container de resultados
-      resultElement.insertBefore(reloadButton, resultElement.firstChild);
-      
-      // Inicia a verificação do site - sempre força recarga na primeira abertura
-      checkCurrentSite(true);
+      // Inicia a verificação do site
+      checkCurrentSite();
       
       // Função para verificar o site atual
-      function checkCurrentSite(forceReload = false) {
-        console.log(`Verificando site ${hostname} (forceReload: ${forceReload})`);
+      function checkCurrentSite() {
+        console.log(`Verificando site ${hostname}`);
         
         // Mostra o spinner de carregamento
         loadingElement.classList.remove('is-hidden');
@@ -295,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
           // Send message to background script to check if the site is approved
-          chrome.runtime.sendMessage({action: "checkBetSite", url: hostname, forceReload: forceReload}, function(response) {
+          chrome.runtime.sendMessage({action: "checkBetSite", url: hostname}, function(response) {
             // Hide loading spinner
             loadingElement.classList.add('is-hidden');
             
@@ -371,19 +354,18 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(setupCNPJClickEvent, 200);
           }
           
-          // Display related sites if available
+          // Display related sites if available AND the site is approved
           console.log('Verificando sites relacionados:', response.relatedSites);
           console.log('Hostname atual:', hostname);
-          
-          if (response.relatedSites && response.relatedSites.length > 0) {
+          if (response.isApproved && response.relatedSites && response.relatedSites.length > 0) {
             console.log(`Encontrados ${response.relatedSites.length} sites relacionados`);
             // Clear previous content
             relatedSitesListElement.innerHTML = '';
             
-            // Adiciona título para a seção de sites relacionados
+            // Add title for related sites section
             const titleElement = document.createElement('p');
-            titleElement.className = 'has-text-weight-bold mb-2';
-            titleElement.textContent = 'Sites relacionados da mesma empresa:';
+            titleElement.className = 'is-size-6 has-text-weight-bold mb-2';
+            titleElement.textContent = 'Sites relacionados:';
             relatedSitesListElement.appendChild(titleElement);
             
             // Add each related site as a tag
