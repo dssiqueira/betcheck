@@ -1,5 +1,12 @@
 # BetCheck - Extensão para Chrome
 
+> [!WARNING]
+> **Projeto descontinuado e arquivado em novembro de 2026.**
+>
+> A [Medida Provisória nº 1.394, de 25 de setembro de 2026](https://www.congressonacional.leg.br/materias/medidas-provisorias/-/mpv/175871), proibiu em todo o território nacional a exploração, a oferta, a intermediação e a publicidade de apostas de quota fixa, e extinguiu as autorizações concedidas pelo Ministério da Fazenda. Com isso, a premissa do BetCheck (indicar se um site de apostas é **homologado**) deixou de existir: enquanto a MP estiver em vigor, nenhuma casa de apostas está autorizada a operar no Brasil, e a lista em `data/bets.csv` (julho de 2025) serve apenas como registro histórico.
+>
+> **Não use esta extensão para decidir se um site de apostas é confiável.** Se a MP for rejeitada ou perder a validade, o projeto pode ser retomado.
+
 <p align="center">
   <img src="icons/BetCheck48.png" alt="BetCheck Logo"/>
 </p>
